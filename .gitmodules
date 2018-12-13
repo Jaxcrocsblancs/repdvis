@@ -1,6 +1,0 @@
-[submodule "libraries/glad"]
-	path = libraries/glad
-	url = https://github.com/Dav1dde/glad.git
-[submodule "libraries/glfw"]
-	path = libraries/glfw
-	url = https://github.com/glfw/glfw.git
