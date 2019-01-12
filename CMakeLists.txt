@@ -1,18 +1,22 @@
 # Project definition
 cmake_minimum_required(VERSION 3.1)
-project(InitGL)
+project(repdvis)
 
 # Source files
-set(SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/source")
-set(LIB_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libraries")
-set(SOURCES "${SRC_DIR}/main.cpp")
+set(SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src")
+set(LIB_DIR "${CMAKE_CURRENT_SOURCE_DIR}/lib")
+
+file(GLOB SOURCES
+    "${SRC_DIR}/*.h"
+    "${SRC_DIR}/*.cpp"
+)
 
 # Executable definition and properties
 add_executable(${PROJECT_NAME} ${SOURCES})
 target_include_directories(${PROJECT_NAME} PRIVATE "${SRC_DIR}")
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 11)
 
-set(OpenGL_GL_PREFERENCE "GLVND")
+#set(OpenGL_GL_PREFERENCE "GLVND")
 
 # GLFW
 set(GLFW_DIR "${LIB_DIR}/glfw")
