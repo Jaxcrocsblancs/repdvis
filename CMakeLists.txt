@@ -14,9 +14,15 @@ file(GLOB SOURCES
 # Executable definition and properties
 add_executable(${PROJECT_NAME} ${SOURCES})
 target_include_directories(${PROJECT_NAME} PRIVATE "${SRC_DIR}")
+
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 11)
 
 #set(OpenGL_GL_PREFERENCE "GLVND")
+
+# STB
+set(STB_DIR "${LIB_DIR}/stb")
+target_include_directories(${PROJECT_NAME} PRIVATE "${STB_DIR}")
+
 
 # GLFW
 set(GLFW_DIR "${LIB_DIR}/glfw")

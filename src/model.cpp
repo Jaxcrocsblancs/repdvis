@@ -4,8 +4,7 @@
 #include <sstream>
 #include "model.h"
 
-// fills verts and faces arrays, supposes .obj file to have "f " entries without slashes
-Model::Model(const char *filename) : verts(), faces(), v2h(), opposites() {
+Model::Model(const char *filename) : verts(), faces(), norms(), texcoords() {
     std::ifstream in;
     in.open (filename, std::ifstream::in);
     if (in.fail()) {
@@ -22,73 +21,32 @@ Model::Model(const char *filename) : verts(), faces(), v2h(), opposites() {
             Vec3f v;
             for (int i=0;i<3;i++) iss >> v[i];
             verts.push_back(v);
+        } else if (!line.compare(0, 3, "vn ")) {
+            iss >> trash >> trash;
+            Vec3f n;
+            for (int i=0;i<3;i++) iss >> n[i];
+            norms.push_back(n);
+        } else if (!line.compare(0, 3, "vt ")) {
+            iss >> trash >> trash;
+            Vec2f uv;
+            for (int i=0;i<2;i++) iss >> uv[i];
+            texcoords.push_back(uv);
         } else if (!line.compare(0, 2, "f ")) {
-            Vec3i f;
-            int idx, cnt=0;
+            std::vector<Vec3i> f;
+            Vec3i tmp;
             iss >> trash;
-            while (iss >> idx) {
-                idx--; // in wavefront obj all indices start at 1, not zero
-                f[cnt++] = idx;
+            while (iss >> tmp[0] >> trash >> tmp[1] >> trash >> tmp[2]) {
+                for (int i=0; i<3; i++) tmp[i]--; // in wavefront obj all indices start at 1, not zero
+                f.push_back(tmp);
             }
-            if (3==cnt) faces.push_back(f);
+            assert(3==f.size());
+            faces.push_back(f);
         }
     }
     std::cerr << "# v# " << verts.size() << " f# "  << faces.size() << std::endl;
 
-    v2h = std::vector<std::vector<int> >(verts.size());
-    for (int i=0; i<nfaces(); i++) {
-        for (int k=0; k<3; k++) {
-            v2h[vert(i,k)].push_back(i*3+k);
-        }
-    }
-    opposites = std::vector<int>(nfaces()*3, -1);
-    compute_opposites();
-
-
     Vec3f min, max;
     get_bbox(min, max);
-}
-
-int Model::first_halfedge(int vid) {
-    assert(vid>=0 && vid<nverts());
-    return v2h[vid].front();
-}
-
-int Model::from(int hid) {
-    return vert(hid/3, hid%3);
-}
-
-int Model::to(int hid) {
-    return vert(hid/3, (hid+1)%3);
-}
-
-int Model::opp(int hid) {
-    return opposites[hid];
-}
-
-int Model::next(int hid) {
-    return (hid/3)*3 + ((hid%3)+1)%3;
-}
-
-int Model::prev(int hid) {
-    return (hid/3)*3 + ((hid%3)+2)%3;
-}
-
-void Model::compute_opposites() {
-    for (int h1=0; h1<nfaces()*3; h1++) {
-        int v1 = from(h1);
-        int v2 = to(h1);
-
-        for (int j=0; j<(int)v2h[v2].size(); j++) {
-            int h2 = v2h[v2][j];
-            assert(v2==from(h2));
-            int v3 = to(h2);
-            if (v3==v1) {
-                opposites[h1] = h2;
-                opposites[h2] = h1;
-            }
-        }
-    }
 }
 
 int Model::nverts() {
@@ -97,10 +55,6 @@ int Model::nverts() {
 
 int Model::nfaces() {
     return (int)faces.size();
-}
-
-int Model::nhalfedges() {
-    return faces.size()*3;
 }
 
 void Model::get_bbox(Vec3f &min, Vec3f &max) {
@@ -121,20 +75,16 @@ Vec3f &Model::point(int i) {
 
 int Model::vert(int fi, int li) {
     assert(fi>=0 && fi<nfaces() && li>=0 && li<3);
-    return faces[fi][li];
+    return faces[fi][li].x;
 }
 
-std::ostream& operator<<(std::ostream& out, Model &m) {
-    for (int i=0; i<m.nverts(); i++) {
-        out << "v " << m.point(i) << std::endl;
-    }
-    for (int i=0; i<m.nfaces(); i++) {
-        out << "f ";
-        for (int k=0; k<3; k++) {
-            out << (m.vert(i,k)+1) << " ";
-        }
-        out << std::endl;
-    }
-    return out;
+Vec2f Model::uv(int fi, int li) {
+    assert(fi>=0 && fi<nfaces() && li>=0 && li<3);
+    return texcoords[faces[fi][li].y];
+}
+
+Vec3f Model::normal(int fi, int li) {
+    assert(fi>=0 && fi<nfaces() && li>=0 && li<3);
+    return norms[faces[fi][li].z];
 }
 
