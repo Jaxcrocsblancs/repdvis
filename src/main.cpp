@@ -11,40 +11,24 @@
 #include "model.h"
 
 
-GLuint loadBMP(const char * imagepath) {
+GLuint load_texture(const char * imagepath) {
     printf("Reading image %s\n", imagepath);
 
-     stbi_set_flip_vertically_on_load(1);
-     int width, height, bpp;
-     unsigned char* rgb = stbi_load( imagepath, &width, &height, &bpp, 3 );
-
+    stbi_set_flip_vertically_on_load(1);
+    int width, height, bpp;
+    unsigned char* rgb = stbi_load( imagepath, &width, &height, &bpp, 3 );
 
     // Create one OpenGL texture
     GLuint textureID;
     glGenTextures(1, &textureID);
-
-    // "Bind" the newly created texture : all future texture functions will modify this texture
     glBindTexture(GL_TEXTURE_2D, textureID);
-
-glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-
-glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, rgb);
-glGenerateMipmap(GL_TEXTURE_2D); // Unavailable in OpenGL 2.1, use gluBuild2DMipmaps() insteads.
-
-
-
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL,  0);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, rgb);
     glBindTexture(GL_TEXTURE_2D, 0);
 
+    stbi_image_free( rgb );
 
- stbi_image_free( rgb );
-
-
-
-    // Return the ID of the texture we just created
     return textureID;
 }
 
@@ -148,8 +132,8 @@ int setup_window(GLFWwindow* &window, const GLuint width, const GLuint height) {
 }
 
 int main(int argc, char** argv) {
-    if (argc<3) {
-        std::cerr << "Usage: " << argv[0] << " model.obj diffuse.bmp" << std::endl;
+    if (argc<4) {
+        std::cerr << "Usage: " << argv[0] << " model.obj diffuse.jpg tangentnormals.jpg" << std::endl;
         return -1;
     }
     Model model(argv[1]);
@@ -169,99 +153,21 @@ int main(int argc, char** argv) {
     GLuint ViewMatrixID = glGetUniformLocation(prog_hdlr, "V");
     GLuint ModelMatrixID = glGetUniformLocation(prog_hdlr, "M");
     GLuint LightID = glGetUniformLocation(prog_hdlr, "LightPosition_worldspace");
-    GLuint TextureID  = glGetUniformLocation(prog_hdlr, "myTextureSampler");
+    GLuint Texture0ID  = glGetUniformLocation(prog_hdlr, "diffuse");
+    GLuint Texture1ID  = glGetUniformLocation(prog_hdlr, "tangentnm");
 
 
     std::vector<GLfloat> vertices(3*3*model.nfaces(), 0);
     std::vector<GLfloat>      uvs(2*3*model.nfaces(), 0);
     std::vector<GLfloat>  normals(3*3*model.nfaces(), 0);
-    std::vector<GLuint>   indices(  3*model.nfaces(), 0);
 
-    if (1)
     for (int i=0; i<model.nfaces(); i++) {
          for (int j=0; j<3; j++) {
-            indices[i*3+j] = i*3+j;
             for (int k=0; k<2; k++)      uvs[(i*3+j)*2 + k] = model.uv    (i, j)[k];
             for (int k=0; k<3; k++)  normals[(i*3+j)*3 + k] = model.normal(i, j)[k];
             for (int k=0; k<3; k++) vertices[(i*3+j)*3 + k] = model.point(model.vert(i, j))[k];
-
-//          for (int k=0; k<2; k++) vertices[(i*3+j)*3 + k] = 2*model.uv    (i, j)[k] - 1;
-//          vertices[(i*3+j)*3 + 2] = -.5;
-
-
          }
     }
-
-/*
-    vertices.push_back(-1);
-    vertices.push_back(-1);
-    vertices.push_back(0);
-
-    vertices.push_back(1);
-    vertices.push_back(-1);
-    vertices.push_back(0);
-    
-    vertices.push_back(1);
-    vertices.push_back(1);
-    vertices.push_back(0);
-
-
-    vertices.push_back(-1);
-    vertices.push_back(-1);
-    vertices.push_back(0);
-
-   
-    vertices.push_back(1);
-    vertices.push_back(1);
-    vertices.push_back(0);
-
-
-    vertices.push_back(-1);
-    vertices.push_back(1);
-    vertices.push_back(0);
-
-    uvs.push_back(0);
-    uvs.push_back(0);
-    uvs.push_back(1);
-    uvs.push_back(0);
-    uvs.push_back(1);
-    uvs.push_back(1);
-
-    uvs.push_back(0);
-    uvs.push_back(0);
-    uvs.push_back(1);
-    uvs.push_back(1);
-
-
-
-    uvs.push_back(0);
-    uvs.push_back(1);
-
-    normals.push_back(0);
-    normals.push_back(0);
-    normals.push_back(1);
-
-    normals.push_back(0);
-    normals.push_back(0);
-    normals.push_back(1);
-
-    normals.push_back(0);
-    normals.push_back(0);
-    normals.push_back(1);
-
-
-    normals.push_back(0);
-    normals.push_back(0);
-    normals.push_back(1);
-
-    normals.push_back(0);
-    normals.push_back(0);
-    normals.push_back(1);
-
-      normals.push_back(0);
-    normals.push_back(0);
-      normals.push_back(0);
-*/
 
     // create the VAO that we use when drawing
     GLuint vao = 0;
@@ -283,15 +189,9 @@ int main(int argc, char** argv) {
     glBindBuffer(GL_ARRAY_BUFFER, normalbuffer);
     glBufferData(GL_ARRAY_BUFFER, normals.size()*sizeof(GLfloat), normals.data(), GL_STATIC_DRAW);
 
-    GLuint elementbuffer = 0;
-    glGenBuffers(1, &elementbuffer);                      // allocate and assign one Element Buffer Object to our handle
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementbuffer); // bind our VBO as being the active buffer and storing indices
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint)*indices.size(), indices.data(), GL_STATIC_DRAW); // copy the indices to our buffer. The buffer contains sizeof(GLuint) * 3 * ntriangles bytes
-
-
-    // Load the texture
-    GLuint Texture = loadBMP(argv[2]);
-
+    // Load the textures
+    GLuint tex_diffuse = load_texture(argv[2]);
+    GLuint tex_normals = load_texture(argv[3]);
 
     glViewport(0, 0, width, height);
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
@@ -304,20 +204,22 @@ int main(int argc, char** argv) {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         float identity[16] = {1, 0, 0, 0,    0, 1, 0, 0,    0, 0, 1, 0,    0, 0, 0, 1};
-        float m[16] = {1, 0, 0, 0,    0, 1, 0, 0,    0, 0,-1, 0,    0, 0, 0, 1};
         float lightpos[3] = {4, 4, 4};
 
         // Send our transformation to the currently bound shader
-        glUniformMatrix4fv(MatrixID, 1, GL_FALSE, m);
         glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, identity);
-        glUniformMatrix4fv(ViewMatrixID, 1, GL_FALSE, identity);
+        glUniformMatrix4fv(ViewMatrixID,  1, GL_FALSE, identity);
+        identity[10] = -1;
+        glUniformMatrix4fv(MatrixID,      1, GL_FALSE, identity);
         glUniform3fv(LightID, 1, lightpos);
 
         glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, Texture);
-        // Set our "myTextureSampler" sampler to use Texture Unit 0
-        glUniform1i(TextureID, 0);
+        glBindTexture(GL_TEXTURE_2D, tex_diffuse);
+        glUniform1i(Texture0ID, 0);
 
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, tex_normals);
+        glUniform1i(Texture1ID, 1);
 
         // 1st attribute buffer : vertices
         glEnableVertexAttribArray(0);
@@ -334,13 +236,8 @@ int main(int argc, char** argv) {
         glBindBuffer(GL_ARRAY_BUFFER, normalbuffer);
         glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
 
-        // index buffer
-//        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementbuffer);
-
         // draw the triangles!
         glDrawArrays(GL_TRIANGLES, 0, vertices.size());
-        // TODO compare glDrawArrays vs glDrawElements
-//        glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, (GLvoid*)0);
 
         glDisableVertexAttribArray(0);
         glDisableVertexAttribArray(1);
@@ -357,8 +254,8 @@ int main(int argc, char** argv) {
     glDeleteBuffers(1, &vertexbuffer);
     glDeleteBuffers(1, &uvbuffer);
     glDeleteBuffers(1, &normalbuffer);
-    glDeleteBuffers(1, &elementbuffer);
-    glDeleteTextures(1, &Texture);
+    glDeleteTextures(1, &tex_diffuse);
+    glDeleteTextures(1, &tex_normals);
     glDeleteVertexArrays(1, &vao);
 
     glfwTerminate();
