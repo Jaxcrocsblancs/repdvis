@@ -14,9 +14,9 @@
 GLuint loadBMP(const char * imagepath) {
     printf("Reading image %s\n", imagepath);
 
-     stbi_set_flip_vertically_on_load(1);
-     int width, height, bpp;
-     unsigned char* rgb = stbi_load( imagepath, &width, &height, &bpp, 3 );
+    stbi_set_flip_vertically_on_load(1);
+    int width, height, bpp;
+    unsigned char* rgb = stbi_load( imagepath, &width, &height, &bpp, 3 );
 
 
     // Create one OpenGL texture
@@ -26,21 +26,21 @@ GLuint loadBMP(const char * imagepath) {
     // "Bind" the newly created texture : all future texture functions will modify this texture
     glBindTexture(GL_TEXTURE_2D, textureID);
 
-glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 
-glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, rgb);
-glGenerateMipmap(GL_TEXTURE_2D); // Unavailable in OpenGL 2.1, use gluBuild2DMipmaps() insteads.
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, rgb);
+    glGenerateMipmap(GL_TEXTURE_2D); // Unavailable in OpenGL 2.1, use gluBuild2DMipmaps() insteads.
 
 
 
     glBindTexture(GL_TEXTURE_2D, 0);
 
 
- stbi_image_free( rgb );
+    stbi_image_free( rgb );
 
 
 
@@ -85,10 +85,12 @@ void read_n_compile_shader(const char *filename, GLuint &hdlr, GLenum shaderType
 
     GLint log_length;
     glGetShaderiv(hdlr, GL_INFO_LOG_LENGTH, &log_length);
-    std::vector<char> v(log_length, 0);
-    glGetShaderInfoLog(hdlr, log_length, NULL, v.data());
-    if (strlen(v.data())>0) {
-        std::cerr << v.data() << std::endl;
+    if (log_length>0) {
+        std::vector<char> v(log_length, 0);
+        glGetShaderInfoLog(hdlr, log_length, NULL, v.data());
+        if (strlen(v.data())>0) {
+            std::cerr << v.data() << std::endl;
+        }
     }
 
     delete [] buffer;
@@ -115,10 +117,12 @@ void set_shaders(GLuint &prog_hdlr, const char *vsfile, const char *fsfile) {
 
     GLint log_length;
     glGetProgramiv(prog_hdlr, GL_INFO_LOG_LENGTH, &log_length);
-    std::vector<char> v(log_length);
-    glGetProgramInfoLog(prog_hdlr, log_length, NULL, v.data());
-    if (strlen(v.data())>0) {
-        std::cerr << v.data() << std::endl;
+    if (log_length>0) {
+        std::vector<char> v(log_length);
+        glGetProgramInfoLog(prog_hdlr, log_length, NULL, v.data());
+        if (strlen(v.data())>0) {
+            std::cerr << v.data() << std::endl;
+        }
     }
 }
 
