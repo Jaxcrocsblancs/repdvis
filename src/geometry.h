@@ -138,6 +138,11 @@ public:
         for (size_t i=DimRows; i--; rows[i][idx]=v[i]);
     }
 
+    void export_row_major(float *arr) {
+        for (size_t i=DimRows; i--; )
+            for (size_t j=DimCols;j--; arr[i+j*DimCols] = rows[i][j]);
+    }
+
     static mat<DimRows,DimCols,T> identity() {
         mat<DimRows,DimCols,T> ret;
         for (size_t i=DimRows; i--; )

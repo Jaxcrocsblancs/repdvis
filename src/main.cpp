@@ -27,8 +27,7 @@ GLuint load_texture(const char * imagepath) {
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, rgb);
     glBindTexture(GL_TEXTURE_2D, 0);
 
-    stbi_image_free( rgb );
-
+    stbi_image_free(rgb);
     return textureID;
 }
 
@@ -55,7 +54,7 @@ void read_n_compile_shader(const char *filename, GLuint &hdlr, GLenum shaderType
     long size = is.tellg();
     char *buffer = new char[size+1];
     is.seekg(0, std::ios::beg);
-    is.read (buffer, size);
+    is.read(buffer, size);
     is.close();
     buffer[size] = 0;
 
@@ -69,10 +68,12 @@ void read_n_compile_shader(const char *filename, GLuint &hdlr, GLenum shaderType
 
     GLint log_length;
     glGetShaderiv(hdlr, GL_INFO_LOG_LENGTH, &log_length);
-    std::vector<char> v(log_length, 0);
-    glGetShaderInfoLog(hdlr, log_length, NULL, v.data());
-    if (strlen(v.data())>0) {
-        std::cerr << v.data() << std::endl;
+    if (log_length>0) {
+        std::vector<char> v(log_length, 0);
+        glGetShaderInfoLog(hdlr, log_length, NULL, v.data());
+        if (strlen(v.data())>0) {
+            std::cerr << v.data() << std::endl;
+        }
     }
 
     delete [] buffer;
@@ -83,15 +84,13 @@ void set_shaders(GLuint &prog_hdlr, const char *vsfile, const char *fsfile) {
     read_n_compile_shader(vsfile, vert_hdlr, GL_VERTEX_SHADER);
     read_n_compile_shader(fsfile, frag_hdlr, GL_FRAGMENT_SHADER);
 
+    std::cerr << "Linking shaders... ";
     prog_hdlr = glCreateProgram();
     glAttachShader(prog_hdlr, vert_hdlr);
     glAttachShader(prog_hdlr, frag_hdlr);
     glDeleteShader(vert_hdlr);
     glDeleteShader(frag_hdlr);
-
     glLinkProgram(prog_hdlr);
-
-    std::cerr << "Linking shaders... ";
 
     GLint success;
     glGetProgramiv(prog_hdlr, GL_LINK_STATUS, &success);
@@ -99,10 +98,12 @@ void set_shaders(GLuint &prog_hdlr, const char *vsfile, const char *fsfile) {
 
     GLint log_length;
     glGetProgramiv(prog_hdlr, GL_INFO_LOG_LENGTH, &log_length);
-    std::vector<char> v(log_length);
-    glGetProgramInfoLog(prog_hdlr, log_length, NULL, v.data());
-    if (strlen(v.data())>0) {
-        std::cerr << v.data() << std::endl;
+    if (log_length>0) {
+        std::vector<char> v(log_length);
+        glGetProgramInfoLog(prog_hdlr, log_length, NULL, v.data());
+        if (strlen(v.data())>0) {
+            std::cerr << v.data() << std::endl;
+        }
     }
 }
 
@@ -147,6 +148,10 @@ int main(int argc, char** argv) {
 
     GLuint prog_hdlr;
     set_shaders(prog_hdlr, "../shaders/vertex.glsl", "../shaders/fragment.glsl");
+
+    Matrix M = Matrix::identity();
+    Matrix V = Matrix::identity();
+    Matrix P = Matrix::identity();
 
     // Get handles to our uniforms
     GLuint MatrixID = glGetUniformLocation(prog_hdlr, "MVP");
@@ -199,18 +204,24 @@ int main(int argc, char** argv) {
     glDepthFunc(GL_LESS);   // accept fragment if it closer to the camera than the former one
 
     while (!glfwWindowShouldClose(window)) {
+        Matrix R = Matrix::identity();
+        R[0][0] = R[2][2] = cos(0.01);
+        R[2][0] = sin(0.01);
+        R[0][2] = -sin(0.01);
+        M = R*M;
         glUseProgram(prog_hdlr);
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        float identity[16] = {1, 0, 0, 0,    0, 1, 0, 0,    0, 0, 1, 0,    0, 0, 0, 1};
-        float lightpos[3] = {4, 4, 4};
-
+        float tmp[16] = {0};
         // Send our transformation to the currently bound shader
-        glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, identity);
-        glUniformMatrix4fv(ViewMatrixID,  1, GL_FALSE, identity);
-        identity[10] = -1;
-        glUniformMatrix4fv(MatrixID,      1, GL_FALSE, identity);
+        M.export_row_major(tmp);
+        glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, tmp);
+        V.export_row_major(tmp);
+        glUniformMatrix4fv(ViewMatrixID,  1, GL_FALSE, tmp);
+        (P*V*M).export_row_major(tmp);
+        glUniformMatrix4fv(MatrixID,      1, GL_FALSE, tmp);
+        float lightpos[3] = {4, 4, -4};
         glUniform3fv(LightID, 1, lightpos);
 
         glActiveTexture(GL_TEXTURE0);
