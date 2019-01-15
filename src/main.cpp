@@ -133,11 +133,16 @@ int setup_window(GLFWwindow* &window, const GLuint width, const GLuint height) {
 }
 
 int main(int argc, char** argv) {
-    if (argc<4) {
-        std::cerr << "Usage: " << argv[0] << " model.obj diffuse.jpg tangentnormals.jpg" << std::endl;
-        return -1;
+    std::cout << "Usage: " << argv[0] << " model.obj diffuse.jpg tangentnormals.jpg" << std::endl;
+    std::string file_obj("../models/diablo3_pose.obj");
+    std::string file_diff("../models/diablo3_pose_diffuse.jpg");
+    std::string file_nm("../models/diablo3_pose_nm_tangent.jpg");
+    if (4==argc) {
+        file_obj  = std::string(argv[1]);
+        file_diff = std::string(argv[2]);
+        file_nm   = std::string(argv[3]);
     }
-    Model model(argv[1]);
+    Model model(file_obj.c_str());
 
     const GLuint width = 800, height = 800;
     GLFWwindow* window;
@@ -195,8 +200,8 @@ int main(int argc, char** argv) {
     glBufferData(GL_ARRAY_BUFFER, normals.size()*sizeof(GLfloat), normals.data(), GL_STATIC_DRAW);
 
     // Load the textures
-    GLuint tex_diffuse = load_texture(argv[2]);
-    GLuint tex_normals = load_texture(argv[3]);
+    GLuint tex_diffuse = load_texture(file_diff.c_str());
+    GLuint tex_normals = load_texture(file_nm.c_str());
 
     glViewport(0, 0, width, height);
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
