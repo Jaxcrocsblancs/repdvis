@@ -6,8 +6,10 @@ in vec3 Position_worldspace;
 in vec3 Normal_cameraspace;
 in vec3 EyeDirection_cameraspace;
 in vec3 LightDirection_cameraspace;
+in vec3 tangent_cameraspace;
+in vec3 bitangent_cameraspace;
 
-// Ouput data
+// Output data
 out vec3 color;
 
 // Values that stay constant for the whole mesh.
@@ -25,13 +27,17 @@ void main() {
     // Material properties
     vec3 MaterialDiffuseColor = texture(diffuse, UV).rgb;
     vec3 MaterialAmbientColor = vec3(0.1,0.1,0.1) * MaterialDiffuseColor;
-    vec3 MaterialSpecularColor = vec3(0.3,0.3,0.3);
+    vec3 MaterialSpecularColor = vec3(0.2,0.2,0.2);
 
     // Distance to the light
     float distance = length( LightPosition_worldspace - Position_worldspace );
 
     // Normal of the computed fragment, in camera space
     vec3 n = normalize( Normal_cameraspace );
+	
+	mat3 B = mat3(tangent_cameraspace, bitangent_cameraspace, n);
+	n = normalize((B*normalize(texture(tangentnm, UV).rgb * 2 - 1)));
+
     // Direction of the light (from the fragment to the light)
     vec3 l = normalize( LightDirection_cameraspace );
     // Cosine of the angle between the normal and the light direction, 
@@ -57,6 +63,6 @@ void main() {
         // Diffuse : "color" of the object
         MaterialDiffuseColor * LightColor * LightPower * cosTheta / (distance*distance) +
         // Specular : reflective highlight, like a mirror
-        0*MaterialSpecularColor * LightColor * LightPower * pow(cosAlpha,15) / (distance*distance);
+        MaterialSpecularColor * LightColor * LightPower * pow(cosAlpha,15) / (distance*distance);
 }
 

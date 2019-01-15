@@ -171,15 +171,35 @@ int main(int argc, char** argv) {
 
     std::vector<GLfloat> vertices(3*3*model.nfaces(), 0);
     std::vector<GLfloat>      uvs(2*3*model.nfaces(), 0);
-    std::vector<GLfloat>  normals(3*3*model.nfaces(), 0);
+	std::vector<GLfloat>     normals(3 * 3 * model.nfaces(), 0);
+	std::vector<GLfloat>    tangents(3 * 3 * model.nfaces(), 0);
+	std::vector<GLfloat>  bitangents(3 * 3 * model.nfaces(), 0);
 
-    for (int i=0; i<model.nfaces(); i++) {
-         for (int j=0; j<3; j++) {
+	for (int i=0; i<model.nfaces(); i++) {
+		Vec3f v0 = model.point(model.vert(i, 0));
+		Vec3f v1 = model.point(model.vert(i, 1));
+		Vec3f v2 = model.point(model.vert(i, 2));
+
+		Vec3f v01 = proj<3>((V * M)*(embed<4>(v1 - v0)));
+		Vec3f v02 = proj<3>((V * M)*(embed<4>(v2 - v0)));
+		mat<3, 3, float> A;
+		A[0] = v01;
+		A[1] = v02;
+		A[2] = cross(v01, v02).normalize();
+
+		Vec3f tgt   = A.invert() * Vec3f(model.uv(i, 1).x - model.uv(i, 0).x, model.uv(i, 2).x - model.uv(i, 0).x, 0);
+		Vec3f bitgt = A.invert() * Vec3f(model.uv(i, 1).y - model.uv(i, 0).y, model.uv(i, 2).y - model.uv(i, 0).y, 0);
+		tgt.normalize();
+		bitgt.normalize();
+
+		for (int j=0; j<3; j++) {
             for (int k=0; k<2; k++)      uvs[(i*3+j)*2 + k] = model.uv    (i, j)[k];
             for (int k=0; k<3; k++)  normals[(i*3+j)*3 + k] = model.normal(i, j)[k];
             for (int k=0; k<3; k++) vertices[(i*3+j)*3 + k] = model.point(model.vert(i, j))[k];
-         }
-    }
+			for (int k = 0; k < 3; k++)    tangents[(i * 3 + j) * 3 + k] = tgt[k];
+			for (int k = 0; k < 3; k++)  bitangents[(i * 3 + j) * 3 + k] = bitgt[k];
+		}
+	}
 
     // create the VAO that we use when drawing
     GLuint vao = 0;
@@ -200,6 +220,16 @@ int main(int argc, char** argv) {
     glGenBuffers(1, &normalbuffer);
     glBindBuffer(GL_ARRAY_BUFFER, normalbuffer);
     glBufferData(GL_ARRAY_BUFFER, normals.size()*sizeof(GLfloat), normals.data(), GL_STATIC_DRAW);
+
+	GLuint tangentbuffer;
+	glGenBuffers(1, &tangentbuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, tangentbuffer);
+	glBufferData(GL_ARRAY_BUFFER, tangents.size() * sizeof(GLfloat), tangents.data(), GL_STATIC_DRAW);
+
+	GLuint bitangentbuffer;
+	glGenBuffers(1, &bitangentbuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, bitangentbuffer);
+	glBufferData(GL_ARRAY_BUFFER, bitangents.size() * sizeof(GLfloat), bitangents.data(), GL_STATIC_DRAW);
 
     // Load the textures
     GLuint tex_diffuse = load_texture(file_diff.c_str());
@@ -256,12 +286,22 @@ int main(int argc, char** argv) {
         glBindBuffer(GL_ARRAY_BUFFER, uvbuffer);
         glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
 
-        // 3rd attribute buffer : normals
-        glEnableVertexAttribArray(2);
-        glBindBuffer(GL_ARRAY_BUFFER, normalbuffer);
-        glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
+		// 3rd attribute buffer : normals
+		glEnableVertexAttribArray(2);
+		glBindBuffer(GL_ARRAY_BUFFER, normalbuffer);
+		glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
 
-        // draw the triangles!
+		// 4th attribute buffer : tangents
+		glEnableVertexAttribArray(3);
+		glBindBuffer(GL_ARRAY_BUFFER, tangentbuffer);
+		glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
+
+		// 5th attribute buffer : bitangents
+		glEnableVertexAttribArray(4);
+		glBindBuffer(GL_ARRAY_BUFFER, bitangentbuffer);
+		glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
+
+		// draw the triangles!
         glDrawArrays(GL_TRIANGLES, 0, vertices.size());
 
         glDisableVertexAttribArray(0);
@@ -278,8 +318,10 @@ int main(int argc, char** argv) {
     glDisableVertexAttribArray(0);
     glDeleteBuffers(1, &vertexbuffer);
     glDeleteBuffers(1, &uvbuffer);
-    glDeleteBuffers(1, &normalbuffer);
-    glDeleteTextures(1, &tex_diffuse);
+	glDeleteBuffers(1, &normalbuffer);
+	glDeleteBuffers(1, &tangentbuffer);
+	glDeleteBuffers(1, &bitangentbuffer);
+	glDeleteTextures(1, &tex_diffuse);
     glDeleteTextures(1, &tex_normals);
     glDeleteVertexArrays(1, &vao);
 
