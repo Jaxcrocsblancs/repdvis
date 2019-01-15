@@ -1,6 +1,8 @@
 #include <iostream>
 #include <cstring>
 #include <fstream>
+#include <chrono>
+#include <thread>
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -208,7 +210,14 @@ int main(int argc, char** argv) {
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);   // accept fragment if it closer to the camera than the former one
 
+	auto start = std::chrono::steady_clock::now();
     while (!glfwWindowShouldClose(window)) {
+		auto end = std::chrono::steady_clock::now();
+		if (std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() < 20) {
+			std::this_thread::sleep_for(std::chrono::milliseconds(3));
+			continue;
+		}
+		start = end;
         Matrix R = Matrix::identity();
         R[0][0] = R[2][2] = cos(0.01);
         R[2][0] = sin(0.01);

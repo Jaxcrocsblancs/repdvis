@@ -2,6 +2,7 @@
 #include <cassert>
 #include <fstream>
 #include <sstream>
+#include <algorithm>
 #include "model.h"
 
 Model::Model(const char *filename) : verts(), faces(), norms(), texcoords() {
