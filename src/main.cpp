@@ -12,6 +12,7 @@
 #include "geometry.h"
 #include "model.h"
 
+bool animate = true;
 
 GLuint load_texture(const char * imagepath) {
     printf("Reading image %s\n", imagepath);
@@ -41,6 +42,9 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
     std::cerr << key << std::endl;
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
         glfwSetWindowShouldClose(window, GL_TRUE);
+    }
+    if (key == GLFW_KEY_SPACE && action == GLFW_PRESS) {
+        animate = !animate;
     }
 }
 
@@ -171,35 +175,35 @@ int main(int argc, char** argv) {
 
     std::vector<GLfloat> vertices(3*3*model.nfaces(), 0);
     std::vector<GLfloat>      uvs(2*3*model.nfaces(), 0);
-	std::vector<GLfloat>     normals(3 * 3 * model.nfaces(), 0);
-	std::vector<GLfloat>    tangents(3 * 3 * model.nfaces(), 0);
-	std::vector<GLfloat>  bitangents(3 * 3 * model.nfaces(), 0);
+    std::vector<GLfloat>     normals(3 * 3 * model.nfaces(), 0);
+    std::vector<GLfloat>    tangents(3 * 3 * model.nfaces(), 0);
+    std::vector<GLfloat>  bitangents(3 * 3 * model.nfaces(), 0);
 
-	for (int i=0; i<model.nfaces(); i++) {
-		Vec3f v0 = model.point(model.vert(i, 0));
-		Vec3f v1 = model.point(model.vert(i, 1));
-		Vec3f v2 = model.point(model.vert(i, 2));
+    for (int i=0; i<model.nfaces(); i++) {
+        Vec3f v0 = model.point(model.vert(i, 0));
+        Vec3f v1 = model.point(model.vert(i, 1));
+        Vec3f v2 = model.point(model.vert(i, 2));
 
-		Vec3f v01 = proj<3>(M*(embed<4>(v1 - v0)));
-		Vec3f v02 = proj<3>(M*(embed<4>(v2 - v0)));
-		mat<3, 3, float> A;
-		A[0] = v01;
-		A[1] = v02;
-		A[2] = cross(v01, v02).normalize();
+        Vec3f v01 = proj<3>(M*(embed<4>(v1 - v0)));
+        Vec3f v02 = proj<3>(M*(embed<4>(v2 - v0)));
+        mat<3, 3, float> A;
+        A[0] = v01;
+        A[1] = v02;
+        A[2] = cross(v01, v02).normalize();
 
-		Vec3f tgt   = A.invert() * Vec3f(model.uv(i, 1).x - model.uv(i, 0).x, model.uv(i, 2).x - model.uv(i, 0).x, 0);
-		Vec3f bitgt = A.invert() * Vec3f(model.uv(i, 1).y - model.uv(i, 0).y, model.uv(i, 2).y - model.uv(i, 0).y, 0);
-		tgt.normalize();
-		bitgt.normalize();
+        Vec3f tgt   = A.invert() * Vec3f(model.uv(i, 1).x - model.uv(i, 0).x, model.uv(i, 2).x - model.uv(i, 0).x, 0);
+        Vec3f bitgt = A.invert() * Vec3f(model.uv(i, 1).y - model.uv(i, 0).y, model.uv(i, 2).y - model.uv(i, 0).y, 0);
+        tgt.normalize();
+        bitgt.normalize();
 
-		for (int j=0; j<3; j++) {
+        for (int j=0; j<3; j++) {
             for (int k=0; k<2; k++)      uvs[(i*3+j)*2 + k] = model.uv    (i, j)[k];
             for (int k=0; k<3; k++)  normals[(i*3+j)*3 + k] = model.normal(i, j)[k];
             for (int k=0; k<3; k++) vertices[(i*3+j)*3 + k] = model.point(model.vert(i, j))[k];
-			for (int k = 0; k < 3; k++)    tangents[(i * 3 + j) * 3 + k] = tgt[k];
-			for (int k = 0; k < 3; k++)  bitangents[(i * 3 + j) * 3 + k] = bitgt[k];
-		}
-	}
+            for (int k = 0; k < 3; k++)    tangents[(i * 3 + j) * 3 + k] = tgt[k];
+            for (int k = 0; k < 3; k++)  bitangents[(i * 3 + j) * 3 + k] = bitgt[k];
+        }
+    }
 
     // create the VAO that we use when drawing
     GLuint vao = 0;
@@ -221,15 +225,15 @@ int main(int argc, char** argv) {
     glBindBuffer(GL_ARRAY_BUFFER, normalbuffer);
     glBufferData(GL_ARRAY_BUFFER, normals.size()*sizeof(GLfloat), normals.data(), GL_STATIC_DRAW);
 
-	GLuint tangentbuffer;
-	glGenBuffers(1, &tangentbuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, tangentbuffer);
-	glBufferData(GL_ARRAY_BUFFER, tangents.size() * sizeof(GLfloat), tangents.data(), GL_STATIC_DRAW);
+    GLuint tangentbuffer;
+    glGenBuffers(1, &tangentbuffer);
+    glBindBuffer(GL_ARRAY_BUFFER, tangentbuffer);
+    glBufferData(GL_ARRAY_BUFFER, tangents.size() * sizeof(GLfloat), tangents.data(), GL_STATIC_DRAW);
 
-	GLuint bitangentbuffer;
-	glGenBuffers(1, &bitangentbuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, bitangentbuffer);
-	glBufferData(GL_ARRAY_BUFFER, bitangents.size() * sizeof(GLfloat), bitangents.data(), GL_STATIC_DRAW);
+    GLuint bitangentbuffer;
+    glGenBuffers(1, &bitangentbuffer);
+    glBindBuffer(GL_ARRAY_BUFFER, bitangentbuffer);
+    glBufferData(GL_ARRAY_BUFFER, bitangents.size() * sizeof(GLfloat), bitangents.data(), GL_STATIC_DRAW);
 
     // Load the textures
     GLuint tex_diffuse = load_texture(file_diff.c_str());
@@ -238,21 +242,22 @@ int main(int argc, char** argv) {
     glViewport(0, 0, width, height);
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glEnable(GL_DEPTH_TEST);
-    glDepthFunc(GL_LESS);   // accept fragment if it closer to the camera than the former one
+    glClearDepth(0);
+    glDepthFunc(GL_GREATER);   // accept fragment if it is closer to the camera than the former one
 
-	auto start = std::chrono::steady_clock::now();
+    auto start = std::chrono::steady_clock::now();
     while (!glfwWindowShouldClose(window)) {
-		auto end = std::chrono::steady_clock::now();
-		if (std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() < 20) {
-			std::this_thread::sleep_for(std::chrono::milliseconds(3));
-			continue;
-		}
-		start = end;
+        auto end = std::chrono::steady_clock::now();
+        if (std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() < 20) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(3));
+            continue;
+        }
+        start = end;
         Matrix R = Matrix::identity();
         R[0][0] = R[2][2] = cos(0.01);
         R[2][0] = sin(0.01);
         R[0][2] = -sin(0.01);
-        M = R*M;
+        if (animate) M = R*M;
         glUseProgram(prog_hdlr);
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -265,7 +270,7 @@ int main(int argc, char** argv) {
         glUniformMatrix4fv(ViewMatrixID,  1, GL_FALSE, tmp);
         (P*V*M).export_row_major(tmp);
         glUniformMatrix4fv(MatrixID,      1, GL_FALSE, tmp);
-        float lightpos[3] = {4, 4, -4};
+        float lightpos[3] = {40, 40, 40};
         glUniform3fv(LightID, 1, lightpos);
 
         glActiveTexture(GL_TEXTURE0);
@@ -286,22 +291,22 @@ int main(int argc, char** argv) {
         glBindBuffer(GL_ARRAY_BUFFER, uvbuffer);
         glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
 
-		// 3rd attribute buffer : normals
-		glEnableVertexAttribArray(2);
-		glBindBuffer(GL_ARRAY_BUFFER, normalbuffer);
-		glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
+        // 3rd attribute buffer : normals
+        glEnableVertexAttribArray(2);
+        glBindBuffer(GL_ARRAY_BUFFER, normalbuffer);
+        glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
 
-		// 4th attribute buffer : tangents
-		glEnableVertexAttribArray(3);
-		glBindBuffer(GL_ARRAY_BUFFER, tangentbuffer);
-		glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
+        // 4th attribute buffer : tangents
+        glEnableVertexAttribArray(3);
+        glBindBuffer(GL_ARRAY_BUFFER, tangentbuffer);
+        glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
 
-		// 5th attribute buffer : bitangents
-		glEnableVertexAttribArray(4);
-		glBindBuffer(GL_ARRAY_BUFFER, bitangentbuffer);
-		glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
+        // 5th attribute buffer : bitangents
+        glEnableVertexAttribArray(4);
+        glBindBuffer(GL_ARRAY_BUFFER, bitangentbuffer);
+        glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
 
-		// draw the triangles!
+        // draw the triangles!
         glDrawArrays(GL_TRIANGLES, 0, vertices.size());
 
         glDisableVertexAttribArray(0);
@@ -318,10 +323,10 @@ int main(int argc, char** argv) {
     glDisableVertexAttribArray(0);
     glDeleteBuffers(1, &vertexbuffer);
     glDeleteBuffers(1, &uvbuffer);
-	glDeleteBuffers(1, &normalbuffer);
-	glDeleteBuffers(1, &tangentbuffer);
-	glDeleteBuffers(1, &bitangentbuffer);
-	glDeleteTextures(1, &tex_diffuse);
+    glDeleteBuffers(1, &normalbuffer);
+    glDeleteBuffers(1, &tangentbuffer);
+    glDeleteBuffers(1, &bitangentbuffer);
+    glDeleteTextures(1, &tex_diffuse);
     glDeleteTextures(1, &tex_normals);
     glDeleteVertexArrays(1, &vao);
 

@@ -21,13 +21,8 @@ uniform vec3 LightPosition_worldspace;
 void main() {
     // Light emission properties
     // You probably want to put them as uniforms
-    vec3 LightColor = vec3(1,1,1);
-    float LightPower = 80.0f;
+    float LightPower = 5880.0f;
 
-    // Material properties
-    vec3 MaterialDiffuseColor = texture(diffuse, UV).rgb;
-    vec3 MaterialAmbientColor = vec3(0.1,0.1,0.1) * MaterialDiffuseColor;
-    vec3 MaterialSpecularColor = vec3(0.2,0.2,0.2);
 
     // Distance to the light
     float distance = length( LightPosition_worldspace - Position_worldspace );
@@ -51,6 +46,7 @@ void main() {
     vec3 E = normalize(EyeDirection_cameraspace);
     // Direction in which the triangle reflects the light
     vec3 R = reflect(l,n);
+    if (dot(n,l)<0) R = vec3(0,0,0);
     // Cosine of the angle between the Eye vector and the Reflect vector,
     // clamped to 0
     //  - Looking into the reflection -> 1
@@ -58,11 +54,10 @@ void main() {
     float cosAlpha = clamp( dot( E,R ), 0,1 );
 
 
-    color = // Ambient : simulates indirect lighting
-        MaterialAmbientColor +
-        // Diffuse : "color" of the object
-        MaterialDiffuseColor * LightColor * LightPower * cosTheta / (distance*distance) +
-        // Specular : reflective highlight, like a mirror
-        0*MaterialSpecularColor * LightColor * LightPower * pow(cosAlpha,15) / (distance*distance);
+    color =  texture(diffuse, UV).rgb * (
+                                            0.1 +   // Ambient : simulates indirect lighting
+                                            LightPower * cosTheta / (distance*distance) +          // Diffuse : "color" of the object
+                                            1.0*LightPower * pow(cosAlpha,15) / (distance*distance) // Specular : reflective highlight, like a mirror
+          );
 }
 
