@@ -180,8 +180,8 @@ int main(int argc, char** argv) {
 		Vec3f v1 = model.point(model.vert(i, 1));
 		Vec3f v2 = model.point(model.vert(i, 2));
 
-		Vec3f v01 = proj<3>((V * M)*(embed<4>(v1 - v0)));
-		Vec3f v02 = proj<3>((V * M)*(embed<4>(v2 - v0)));
+		Vec3f v01 = proj<3>(M*(embed<4>(v1 - v0)));
+		Vec3f v02 = proj<3>(M*(embed<4>(v2 - v0)));
 		mat<3, 3, float> A;
 		A[0] = v01;
 		A[1] = v02;

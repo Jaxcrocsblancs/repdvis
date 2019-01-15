@@ -35,7 +35,7 @@ void main() {
     // Normal of the computed fragment, in camera space
     vec3 n = normalize( Normal_cameraspace );
 	
-	mat3 B = mat3(tangent_cameraspace, bitangent_cameraspace, n);
+	mat3 B = mat3(normalize(tangent_cameraspace), normalize(bitangent_cameraspace), n);
 	n = normalize((B*normalize(texture(tangentnm, UV).rgb * 2 - 1)));
 
     // Direction of the light (from the fragment to the light)
@@ -63,6 +63,6 @@ void main() {
         // Diffuse : "color" of the object
         MaterialDiffuseColor * LightColor * LightPower * cosTheta / (distance*distance) +
         // Specular : reflective highlight, like a mirror
-        MaterialSpecularColor * LightColor * LightPower * pow(cosAlpha,15) / (distance*distance);
+        0*MaterialSpecularColor * LightColor * LightPower * pow(cosAlpha,15) / (distance*distance);
 }
 

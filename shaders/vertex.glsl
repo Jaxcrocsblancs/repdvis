@@ -45,7 +45,7 @@ void main() {
     // UV of the vertex. No special space for this one.
     UV = vertexUV;
 	
-	tangent_cameraspace = tangent;
-	bitangent_cameraspace = bitangent;
+	tangent_cameraspace = (V*vec4(tangent, 0)).xyz;
+	bitangent_cameraspace = (V*vec4(bitangent, 0)).xyz;
 }
 
