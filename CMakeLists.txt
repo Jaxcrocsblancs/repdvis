@@ -1,5 +1,6 @@
 # Project definition
-cmake_minimum_required(VERSION 3.1)
+#cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 2.8)
 project(repdvis)
 
 include(CheckCXXCompilerFlag)
@@ -18,6 +19,7 @@ endfunction()
 enable_cxx_compiler_flag_if_supported("-Wall")
 enable_cxx_compiler_flag_if_supported("-Wextra")
 enable_cxx_compiler_flag_if_supported("-pedantic")
+enable_cxx_compiler_flag_if_supported("-std=c++11")
 
 
 # Source files
@@ -33,7 +35,7 @@ file(GLOB SOURCES
 add_executable(${PROJECT_NAME} ${SOURCES})
 target_include_directories(${PROJECT_NAME} PRIVATE "${SRC_DIR}")
 
-set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 11)
+#set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 11)
 
 #set(OpenGL_GL_PREFERENCE "GLVND")
 
@@ -59,5 +61,4 @@ add_library("glad" "${GLAD_DIR}/src/glad.c")
 target_include_directories("glad" PRIVATE "${GLAD_DIR}/include")
 target_include_directories(${PROJECT_NAME} PRIVATE "${GLAD_DIR}/include")
 target_link_libraries(${PROJECT_NAME} "glad" "${CMAKE_DL_LIBS}")
-
 
