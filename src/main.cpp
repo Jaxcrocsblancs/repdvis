@@ -175,9 +175,9 @@ int main(int argc, char** argv) {
 
     std::vector<GLfloat> vertices(3*3*model.nfaces(), 0);
     std::vector<GLfloat>      uvs(2*3*model.nfaces(), 0);
-    std::vector<GLfloat>     normals(3 * 3 * model.nfaces(), 0);
-    std::vector<GLfloat>    tangents(3 * 3 * model.nfaces(), 0);
-    std::vector<GLfloat>  bitangents(3 * 3 * model.nfaces(), 0);
+    std::vector<GLfloat>     normals(3*3*model.nfaces(), 0);
+    std::vector<GLfloat>    tangents(3*3*model.nfaces(), 0);
+    std::vector<GLfloat>  bitangents(3*3*model.nfaces(), 0);
 
     for (int i=0; i<model.nfaces(); i++) {
         Vec3f v0 = model.point(model.vert(i, 0));
@@ -200,8 +200,8 @@ int main(int argc, char** argv) {
             for (int k=0; k<2; k++)      uvs[(i*3+j)*2 + k] = model.uv    (i, j)[k];
             for (int k=0; k<3; k++)  normals[(i*3+j)*3 + k] = model.normal(i, j)[k];
             for (int k=0; k<3; k++) vertices[(i*3+j)*3 + k] = model.point(model.vert(i, j))[k];
-            for (int k = 0; k < 3; k++)    tangents[(i * 3 + j) * 3 + k] = tgt[k];
-            for (int k = 0; k < 3; k++)  bitangents[(i * 3 + j) * 3 + k] = bitgt[k];
+            for (int k=0; k<3; k++)    tangents[(i*3+j)*3 + k] = tgt[k];
+            for (int k=0; k<3; k++)  bitangents[(i*3+j)*3 + k] = bitgt[k];
         }
     }
 
@@ -312,6 +312,8 @@ int main(int argc, char** argv) {
         glDisableVertexAttribArray(0);
         glDisableVertexAttribArray(1);
         glDisableVertexAttribArray(2);
+        glDisableVertexAttribArray(3);
+        glDisableVertexAttribArray(4);
 
         glfwSwapBuffers(window);
         glfwPollEvents();

@@ -21,17 +21,17 @@ uniform vec3 LightPosition_worldspace;
 void main() {
     // Light emission properties
     // You probably want to put them as uniforms
-    float LightPower = 5880.0f;
+    float LightPower = 1.5f;
 
 
     // Distance to the light
-    float distance = length( LightPosition_worldspace - Position_worldspace );
+    float distance = 1;//length( LightPosition_worldspace - Position_worldspace );
 
     // Normal of the computed fragment, in camera space
     vec3 n = normalize( Normal_cameraspace );
-	
-	mat3 B = mat3(normalize(tangent_cameraspace), normalize(bitangent_cameraspace), n);
-	n = normalize((B*normalize(texture(tangentnm, UV).rgb * 2 - 1)));
+
+    mat3 B = mat3(normalize(tangent_cameraspace), normalize(bitangent_cameraspace), n);
+    n = normalize((B*normalize(texture(tangentnm, UV).rgb * 2 - 1)));
 
     // Direction of the light (from the fragment to the light)
     vec3 l = normalize( LightDirection_cameraspace );
@@ -45,7 +45,7 @@ void main() {
     // Eye vector (towards the camera)
     vec3 E = normalize(EyeDirection_cameraspace);
     // Direction in which the triangle reflects the light
-    vec3 R = reflect(l,n);
+    vec3 R = -reflect(l,n);
     if (dot(n,l)<0) R = vec3(0,0,0);
     // Cosine of the angle between the Eye vector and the Reflect vector,
     // clamped to 0
@@ -57,7 +57,7 @@ void main() {
     color =  texture(diffuse, UV).rgb * (
                                             0.1 +   // Ambient : simulates indirect lighting
                                             LightPower * cosTheta / (distance*distance) +          // Diffuse : "color" of the object
-                                            1.0*LightPower * pow(cosAlpha,15) / (distance*distance) // Specular : reflective highlight, like a mirror
+                                            2.0*LightPower * pow(cosAlpha,15) / (distance*distance) // Specular : reflective highlight, like a mirror
           );
 }
 
